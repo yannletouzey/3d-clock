@@ -4,11 +4,10 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { useEffect, useState, useRef } from 'react'
 import { OrbitControls, useHelper } from '@react-three/drei';
 
-
-export default function App() {
-
-  const lightRef = useRef()
-
+function Clock() {
+  const clockRef = useRef()
+  const clockGLTF = useLoader(GLTFLoader, './clock.glb')
+  
   const [second, setSecond] = useState(new Date().getSeconds())
   const [minute, setMinute] = useState(new Date().getMinutes())
   const [hour, setHour] = useState(new Date().getHours())
@@ -16,8 +15,6 @@ export default function App() {
   const [secondPath, setSecondPath] = useState((Math.PI * 2) / 60 * second)
   const [minutePath, setMinutePath] = useState((Math.PI * 2) / 60 * minute)
   const [hourPath, setHourPath] = useState((Math.PI * 2) / 12 * hour)
-  const clockGLTF = useLoader(GLTFLoader, './clock.glb')
-
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -31,10 +28,13 @@ export default function App() {
     return () => clearInterval(interval)
   }, [second, minute, hour])
 
+  useFrame(( { clock } ) => {
+    if (clockRef.current) {
+      clockRef.current.rotation.y = clock.getElapsedTime() * 0.06
+    }
+  })
   return (
-    <Canvas>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[1, 2, 3]} ref={lightRef}/>
+    <group ref={clockRef}>
       <primitive object={clockGLTF.nodes.Center} />
       <primitive object={clockGLTF.nodes.Second} rotation={[0, 0, -secondPath]} />
       <primitive object={clockGLTF.nodes.Minute} rotation={[0, 0, -minutePath]} />
@@ -51,7 +51,21 @@ export default function App() {
       <primitive object={clockGLTF.nodes.ten} />
       <primitive object={clockGLTF.nodes.eleven} />
       <primitive object={clockGLTF.nodes.twelve} />
+    </group>
+  )
+}
+
+export default function App() {
+    
+  const lightRef = useRef()
+  
+
+  return (
+    <Canvas>
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[1, 2, 3]} ref={lightRef}/>
       <OrbitControls />
+      <Clock />
     </Canvas>
   )
 }
